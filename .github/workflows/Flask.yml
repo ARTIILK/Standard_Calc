@@ -1,4 +1,4 @@
-name: Django CI
+name: Flask CI
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -17,14 +16,28 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r GUI_calculater/requirements.txt  # Make sure this path is correct
+
+    - name: Run Flask App
+      run: |
+        cd GUI_calculater  # Change to the directory where app.py is located
+        nohup python app.py &  # Start the Flask app in the background
+
+    - name: Health Check
+      run: |
+        sleep 5  # Wait for the app to start
+        curl -f http://127.0.0.1:5000/ || exit 1
+
     - name: Run Tests
       run: |
-        python app.py test
+        cd GUI_calculater  # Change to the directory where tests are located
+        pytest  # Ensure pytest is set up to find your tests
